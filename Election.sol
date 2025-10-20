@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
-import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract Election {
-    address owner;
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "./ElectionErrors.sol";
+
+contract Election is Ownable {
     uint256 public electionEndTime;
-    string[] candidates; //["Vasya","Taska","Basta","Papsha"]
+    string[] public candidates; //["Vasya","Taska","Basta","Papsha"]
     uint256 maxVotes;
     uint256 leader;
     bool stopped;
@@ -13,75 +15,68 @@ contract Election {
     mapping(address => bool) alreadyVoted;
     mapping(uint256 => uint256) candidatsResult;
 
-    constructor(string[] memory _candidates) {
-        require(_candidates.length > 0, NoAvailableCandidates());
-        candidates = _candidates;
-        owner = msg.sender;
+    modifier validCandidate(uint256 index) {
+        require(index < candidates.length, CandidateNotExist(leader));
+        _;
     }
 
-    error ElectorAlreadyVoted();
-    error CandidateNotExist(uint256 _number);
-    error OwnerCantVote();
-    error ElectionIsOver();
-    error VotingIsStopped();
-    error OnlyOwnerOperation();
-    error VotingIsNotStopped();
-    error VotingIsFailed();
-    error NoAvailableCandidates();
+    modifier notOwner() {
+        require(msg.sender != owner(), OwnerNotAllowed());
+        _;
+    }
 
-    function vote(uint256 _number) public {
+    constructor(string[] memory _candidates) Ownable(msg.sender)  {
+        require(_candidates.length > 0, NoAvailableCandidates());
+        candidates = _candidates;
+    }
+
+    function vote(uint256 _candidateIndex) public validCandidate(_candidateIndex) notOwner {
         require(alreadyVoted[msg.sender] == false, ElectorAlreadyVoted());
-        require(_number < candidates.length, CandidateNotExist(_number));
-        require(msg.sender != owner, OwnerCantVote());
         require(block.timestamp < electionEndTime, ElectionIsOver());
         require(stopped == false, VotingIsStopped());
 
         alreadyVoted[msg.sender] = true;
-        candidatsResult[_number] += 1;
+        candidatsResult[_candidateIndex] += 1;
 
-        if (candidatsResult[_number] > maxVotes) {
-            maxVotes = candidatsResult[_number];
-            leader = _number;
+        if (candidatsResult[_candidateIndex] > maxVotes) {
+            maxVotes = candidatsResult[_candidateIndex];
+            leader = _candidateIndex;
         }
     }
 
-    function getElectionWinner() public view returns(string memory) {
+    function getElectionWinner() public view validCandidate(leader) returns(string memory) {
         require(stopped == true, VotingIsNotStopped());
         require(maxVotes > 0, VotingIsFailed());
-        require(leader < candidates.length, CandidateNotExist(leader));
 
         string memory _winner = candidates[leader];
         return _winner;
     }
 
-    function getCandidatesList() public view returns (string memory) {
-        require(candidates.length > 0, "No available candidates");
-        bytes memory output;
-
-        for (uint256 i = 0; i < candidates.length; i++) {
-            string memory current = string(abi.encodePacked(Strings.toString(i), " - ", candidates[i], ",  "));
-            output = abi.encodePacked(output, current);
-        }
-        return string(output);
-    }
-
-
-    function toggleVote() public {
-        require(msg.sender == owner, OnlyOwnerOperation());
+    function toggleVote() public onlyOwner {
         stopped = !stopped;
     }
 
-    function setElectionTime(uint256 _electionEndTime) public {
-        require(msg.sender == owner, OnlyOwnerOperation());
-        electionEndTime = block.timestamp + _electionEndTime;
+    function setElectionTime(uint256 durationInSeconds) public onlyOwner {
+        electionEndTime = block.timestamp + durationInSeconds;
     }
-
-    // Done:
-    //add maxVotes functionality
-    //add contract owner
-    //contract owner can't vote
-    //add stop voting functionality
-    //only owner can't stop voting
-    //HARD
-    //add electionTime functionality using block.timestamp
 }
+
+// Done:
+//add maxVotes functionality
+//add contract owner
+//contract owner can't vote
+//add stop voting functionality
+//only owner can't stop voting
+//HARD
+//add electionTime functionality using block.timestamp
+
+/*function getCandidatesList() public view returns (string memory) {
+    require(candidates.length > 0, "No available candidates");
+    bytes memory output;
+
+    for (uint256 i = 0; i < candidates.length; i++) {
+        string memory current = string(abi.encodePacked(Strings.toString(i), " - ", candidates[i], ",  "));
+        output = abi.encodePacked(output, current);
+    }
+    return string(output);
+}*/
