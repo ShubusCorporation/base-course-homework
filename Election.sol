@@ -73,7 +73,7 @@ contract Election {
 
     function setElectionTime(uint256 _electionEndTime) public {
         require(msg.sender == owner, OnlyOwnerOperation());
-        electionEndTime = _electionEndTime;
+        electionEndTime = block.timestamp + _electionEndTime;
     }
 
     // Done:
