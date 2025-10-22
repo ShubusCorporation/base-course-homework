@@ -1,0 +1,9 @@
+{
+  "coverage-gutters.coverageFilePaths": [
+    "lcov.info"
+  ],
+  "coverage-gutters.showCoverageOnLoad": true,
+  "coverage-gutters.watchCoverage": true,
+  "coverage-gutters.highlightMode": "both"
+}
+
