@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import {Test} from "forge-std/Test.sol";
 import {Election} from "../src/Election.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {
     NoAvailableCandidates,
@@ -29,7 +28,7 @@ contract ElectionTest is Test {
         election = new Election(candidates);
     }
 
-    function testConstructorInitializesCandidates() public {
+    function testConstructorInitializesCandidates() public view {
         assertEq(election.candidates(0), "Alice");
         assertEq(election.candidates(1), "Bob");
         assertEq(election.candidates(2), "Charlie");

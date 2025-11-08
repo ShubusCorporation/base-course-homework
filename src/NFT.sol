@@ -17,6 +17,7 @@ contract NFT is ERC721, Ownable {
         _maxSupply = _supply;
     }
 
+    // forge-lint: disable-next-line(mixed-case-function)
     function _baseURI() internal pure override returns (string memory) {
         return "ipfs://QmPMc4tcBsMqLRuCQtPmPe84bpSjrC3Ky7t3JWuHXYB4aS/";
     }

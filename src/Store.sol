@@ -92,6 +92,7 @@ contract Store is Ownable {
 
     function addProduct(string calldata _name, uint256 _id, uint256 _stock, uint256 _price) external onlyOwner {
         require(!isIdExist(_id), IdAlreadyExist());
+        // forge-lint: disable-next-line(named-struct-fields)
         products.push(Product(_name,_id,_stock,_price));
     }
 

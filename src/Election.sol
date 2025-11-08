@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
-
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "./ElectionErrors.sol";
+//import "@openzeppelin/contracts/utils/Strings.sol";
+import "./ElectionErrors.sol" as Errors;
 
 contract Election is Ownable {
     uint256 public electionEndTime;
@@ -16,24 +15,32 @@ contract Election is Ownable {
     mapping(uint256 => uint256) candidatsResult;
 
     modifier validCandidate(uint256 index) {
-        require(index < candidates.length, CandidateNotExist(leader));
+        _validCandidate(index);
         _;
     }
 
     modifier notOwner() {
-        require(msg.sender != owner(), OwnerNotAllowed());
+        _notOwner();
         _;
     }
 
+    function _validCandidate(uint256 index) private view {
+        require(index < candidates.length, Errors.CandidateNotExist(index));
+    }
+
+    function _notOwner() private view {
+        require(msg.sender != owner(), Errors.OwnerNotAllowed());
+    }
+
     constructor(string[] memory _candidates) Ownable(msg.sender)  {
-        require(_candidates.length > 0, NoAvailableCandidates());
+        require(_candidates.length > 0, Errors.NoAvailableCandidates());
         candidates = _candidates;
     }
 
     function vote(uint256 _candidateIndex) public validCandidate(_candidateIndex) notOwner {
-        require(alreadyVoted[msg.sender] == false, ElectorAlreadyVoted());
-        require(block.timestamp < electionEndTime, ElectionIsOver());
-        require(stopped == false, VotingIsStopped());
+        require(alreadyVoted[msg.sender] == false, Errors.ElectorAlreadyVoted());
+        require(block.timestamp < electionEndTime, Errors.ElectionIsOver());
+        require(stopped == false, Errors.VotingIsStopped());
 
         alreadyVoted[msg.sender] = true;
         candidatsResult[_candidateIndex] += 1;
@@ -45,8 +52,8 @@ contract Election is Ownable {
     }
 
     function getElectionWinner() public view validCandidate(leader) returns(string memory) {
-        require(stopped == true, VotingIsNotStopped());
-        require(maxVotes > 0, VotingIsFailed());
+        require(stopped == true, Errors.VotingIsNotStopped());
+        require(maxVotes > 0, Errors.VotingIsFailed());
 
         string memory _winner = candidates[leader];
         return _winner;
