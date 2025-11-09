@@ -32,6 +32,11 @@ contract Election is Ownable {
         require(msg.sender != owner(), Errors.OwnerNotAllowed());
     }
 
+    // Вызов конструктора — это не внешний вызов контракта после деплоя,
+    // а часть транзакции деплоя.
+    // То есть constructor вызывается не "извне" через ABI, а при создании контракта,
+    // поэтому Solidity не разрешает calldata для параметров конструктора
+    // (начиная с 0.8.x — только memory можно).
     constructor(string[] memory _candidates) Ownable(msg.sender)  {
         require(_candidates.length > 0, Errors.NoAvailableCandidates());
         candidates = _candidates;
