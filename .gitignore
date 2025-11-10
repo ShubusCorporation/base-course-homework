@@ -17,6 +17,9 @@ docs/
 foundry.lock
 npm/
 artifacts/
+# symlink for Slither
+out/
+out
 .states/
 lib/forge-std
 lib/openzeppelin-contracts

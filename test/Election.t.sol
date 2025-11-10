@@ -136,9 +136,10 @@ contract ElectionTest is Test {
     function testRevertIfCandidateNotExist() public {
         vm.prank(owner);
         election.setElectionTime(1000);
+        uint256 wrongCandidateId = 999;
 
-        vm.expectRevert(abi.encodeWithSelector(CandidateNotExist.selector, 0));
+        vm.expectRevert(abi.encodeWithSelector(CandidateNotExist.selector, wrongCandidateId));
         vm.prank(voter1);
-        election.vote(999); // There's no such candidate
+        election.vote(wrongCandidateId); // There's no such candidate
     }
 }

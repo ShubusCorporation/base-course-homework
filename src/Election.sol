@@ -14,6 +14,8 @@ contract Election is Ownable {
     mapping(address => bool) alreadyVoted;
     mapping(uint256 => uint256) candidatsResult;
 
+    event EventNewLeader(uint256 leader);
+
     modifier validCandidate(uint256 index) {
         _validCandidate(index);
         _;
@@ -42,22 +44,24 @@ contract Election is Ownable {
         candidates = _candidates;
     }
 
-    function vote(uint256 _candidateIndex) public validCandidate(_candidateIndex) notOwner {
-        require(alreadyVoted[msg.sender] == false, Errors.ElectorAlreadyVoted());
+    function vote(uint256 _candidateIndex) external validCandidate(_candidateIndex) notOwner {
+        require(!alreadyVoted[msg.sender], Errors.ElectorAlreadyVoted());
+        require(!stopped, Errors.VotingIsStopped());
+        // Using block.timestamp for deadline comparison is acceptable here.
         require(block.timestamp < electionEndTime, Errors.ElectionIsOver());
-        require(stopped == false, Errors.VotingIsStopped());
 
-        alreadyVoted[msg.sender] = true;
-        candidatsResult[_candidateIndex] += 1;
+        candidatsResult[_candidateIndex] = candidatsResult[_candidateIndex]  + 1;
 
         if (candidatsResult[_candidateIndex] > maxVotes) {
             maxVotes = candidatsResult[_candidateIndex];
             leader = _candidateIndex;
+            emit EventNewLeader(leader);
         }
+        alreadyVoted[msg.sender] = true;
     }
 
     function getElectionWinner() public view validCandidate(leader) returns(string memory) {
-        require(stopped == true, Errors.VotingIsNotStopped());
+        require(stopped, Errors.VotingIsNotStopped());
         require(maxVotes > 0, Errors.VotingIsFailed());
 
         string memory _winner = candidates[leader];
